@@ -1,0 +1,11 @@
+fastapi
+uvicorn
+gradio
+pydantic
+python-dotenv==1.0.0
+loguru==0.7.2
+httpx==0.27.0
+tqdm==4.66.2
+textract==1.6.5
+openai==1.10.0
+asyncio==3.4.3 
