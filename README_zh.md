@@ -10,7 +10,9 @@
 - **问题生成**：基于文档内容自动生成相关问题
 - **答案生成**：使用 LLM 生成高质量答案
 - **异步处理**：支持大规模文档的异步处理
-- **多种导出格式**：支持多种数据集格式导出
+- **多种导出格式**：支持多种数据集格式导出（Alpaca、ShareGPT等）
+- **直接SFT就绪输出**：生成适用于监督微调的数据集
+- **LLM配置验证**：内置工具测试LLM API连接和能力
 - **RESTful API**：提供完整的 API 接口
 
 ## 快速开始
@@ -28,7 +30,7 @@ git clone https://github.com/ZhuLinsen/FastDatasets.git
 cd FastDatasets
 
 # 创建并激活虚拟环境（可选）
-conda create -n fast_datasets python=3.8
+conda create -n fast_datasets python=3.10
 conda activate fast_datasets
 
 # 安装依赖
@@ -37,14 +39,21 @@ pip install -r requirements.txt
 
 ### 使用示例
 
-项目已包含一个测试文档，您可以通过以下命令快速测试：
+项目已包含一个测试文档，您可以快速测试：
+1. 编辑.env文件并配置您的LLM
+   您可以使用以下命令测试LLM连接和能力：
+```bash
+python scripts/test_llm.py
+```
+
+2. 运行以下命令从测试文档生成数据集
 
 ```bash
 # 使用测试文档生成数据集
 python scripts/main_async.py tests/1706.03762v7.pdf -o ./output
 ```
 
-这个命令会处理 Attention is All You Need 论文（测试文档），并在 ./output 目录下生成数据集。
+这个命令会处理"Attention is All You Need"论文（测试文档），并在 ./output 目录下生成数据集。
 
 ### 处理自定义文档
 
@@ -92,10 +101,9 @@ python -m app.main
 2. **内存不足**：减小处理的文档数量或文档大小
 3. **API 超时**：检查网络连接，或减少 MAX_LLM_CONCURRENCY
 
+## 许可证
+[Apache 2.0](LICENSE)
+
 ## Star History
 
 [![Star History Chart](https://api.star-history.com/svg?repos=ZhuLinsen/FastDatasets&type=Date)](https://www.star-history.com/#ZhuLinsen/FastDatasets&Date)
-
-## 许可证
-
-MIT 
