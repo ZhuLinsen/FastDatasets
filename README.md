@@ -108,5 +108,3 @@ Default address: http://localhost:8000
 
 [![Star History Chart](https://api.star-history.com/svg?repos=ZhuLinsen/FastDatasets&type=Date)](https://www.star-history.com/#ZhuLinsen/FastDatasets&Date)
 
-## Advanced Usage
-### LLM Configuration Testing
