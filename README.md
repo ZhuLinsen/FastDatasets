@@ -50,7 +50,7 @@ python scripts/test_llm.py
 
 ```bash
 # Generate dataset from test document
-python scripts/main_async.py tests/1706.03762v7.pdf -o ./output
+python scripts/dataset_generator.py tests/1706.03762v7.pdf -o ./output
 ```
 
 This command processes the "Attention is All You Need" paper (test document) and generates a dataset in the ./output directory.
@@ -59,10 +59,10 @@ This command processes the "Attention is All You Need" paper (test document) and
 
 ```bash
 # Process a single document
-python scripts/main_async.py path/to/your/document.pdf -o ./output_directory
+python scripts/dataset_generator.py path/to/your/document.pdf -o ./output_directory
 
 # Process all documents in a directory
-python scripts/main_async.py path/to/document/directory/ -o ./output_directory
+python scripts/dataset_generator.py path/to/document/directory/ -o ./output_directory
 ```
 
 ### Supported Formats
