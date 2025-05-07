@@ -1,8 +1,7 @@
 # FastDatasets
 
-一个强大的工具，用于为大语言模型（LLM）创建高质量的训练数据集。
-
-[Switch to English](README.md)
+一个强大的工具，用于为大语言模型（LLM）创建高质量的训练数据集 ([Switch to English](README.md))
+![FastDatasets](fastdatasets.png)
 
 ## 主要特性
 
