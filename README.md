@@ -1,8 +1,8 @@
 # FastDatasets
 
-- A powerful tool for creating high-quality training datasets for Large Language Models (LLMs)（一个快速生成高质量LLM训练数据集的工具）
+- A powerful tool for creating high-quality training datasets for Large Language Models (LLMs)（快速生成高质量LLM训练数据集 [中文版](README_zh.md)）
+![FastDatasets](fastdatasets.png)
 
-[中文版](README_zh.md)
 
 ## Features
 
