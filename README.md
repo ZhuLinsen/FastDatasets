@@ -1,107 +1,109 @@
 # FastDatasets
 
-- A powerful tool for creating high-quality training datasets for Large Language Models (LLMs)（快速生成高质量LLM训练数据集 [中文版](README_zh.md)）
 ![FastDatasets](fastdatasets.png)
 
+一个强大的工具，用于为大语言模型（LLM）创建高质量的训练数据集
 
-## Features
+[Switch to English](README_en.md)
 
-- **Intelligent Document Processing**: Smart segmentation of multiple document formats
-- **Question Generation**: Automatic generation of relevant questions based on document content  
-- **Answer Generation**: High-quality answers using LLM
-- **Asynchronous Processing**: Supports large-scale document processing
-- **Multiple Export Formats**: Supports various dataset formats (Alpaca, ShareGPT, etc.)
-- **Direct SFT-ready Output**: Generates datasets ready for supervised fine-tuning
-- **LLM Configuration Validation**: Built-in tool to test LLM API connections and capabilities
-- **RESTful API**: Complete API interface
+## 主要特性
 
-## Quick Start
+- **智能文档处理**：支持多种格式文档的智能分割
+- **问题生成**：基于文档内容自动生成相关问题
+- **答案生成**：使用 LLM 生成高质量答案
+- **异步处理**：支持大规模文档的异步处理
+- **多种导出格式**：支持多种数据集格式导出（Alpaca、ShareGPT等）
+- **直接SFT就绪输出**：生成适用于监督微调的数据集
+- **LLM配置验证**：内置工具测试LLM API连接和能力
+- **RESTful API**：提供完整的 API 接口
 
-### Requirements
+## 快速开始
+
+### 环境要求
 
 - Python 3.8+
-- Dependencies: See `requirements.txt`
+- 依赖包：见 `requirements.txt`
 
-### Installation
+### 安装
 
 ```bash
-# Clone repository
+# 克隆仓库
 git clone https://github.com/ZhuLinsen/FastDatasets.git
 cd FastDatasets
 
-# Create and activate virtual environment (optional)
+# 创建并激活虚拟环境（可选）
 conda create -n fast_datasets python=3.10
 conda activate fast_datasets
 
-# Install dependencies
+# 安装依赖
 pip install -r requirements.txt
 ```
 
-### Usage Example
+### 使用示例
 
-The project includes a test document. You can quickly test with:
-1. edit .env file and configure your LLM
-you can use the following command to test your LLM connection and capabilities:
+项目已包含一个测试文档，您可以快速测试：
+1. 编辑.env文件并配置您的LLM
+   您可以使用以下命令测试LLM连接和能力：
 ```bash
 python scripts/test_llm.py
 ```
 
-2. run the following command to generate dataset from test document
+2. 运行以下命令从测试文档生成数据集
 
 ```bash
-# Generate dataset from test document
+# 使用测试文档生成数据集
 python scripts/dataset_generator.py tests/1706.03762v7.pdf -o ./output
 ```
 
-This command processes the "Attention is All You Need" paper (test document) and generates a dataset in the ./output directory.
+这个命令会处理"Attention is All You Need"论文（测试文档），并在 ./output 目录下生成数据集。
 
-### Custom Documents
+### 处理自定义文档
 
 ```bash
-# Process a single document
-python scripts/dataset_generator.py path/to/your/document.pdf -o ./output_directory
+# 处理单个文档
+python scripts/dataset_generator.py 路径/到/你的文档.pdf -o ./输出目录
 
-# Process all documents in a directory
-python scripts/dataset_generator.py path/to/document/directory/ -o ./output_directory
+# 处理整个目录下的文档
+python scripts/dataset_generator.py 路径/到/文档目录/ -o ./输出目录
 ```
 
-### Supported Formats
+### 支持的文档格式
 
 - PDF (*.pdf)
 - Word (*.docx)
 - Markdown (*.md)
-- Plain text (*.txt)
+- 纯文本 (*.txt)
 
-## Output Structure
+## 输出结构
 
-After processing, the following files are generated in the output directory:
+处理完成后，在指定的输出目录会生成以下文件：
 
-- `chunks.json`: Text chunks after document segmentation
-- `questions.json`: Generated questions
-- `answers.json`: Generated answers
-- `optimized.json`: Optimized QA pairs
-- `dataset-alpaca.json`: Dataset in Alpaca format
-- `dataset-sharegpt.json`: Dataset in ShareGPT format (if configured)
+- `chunks.json`: 文档切分后的文本块
+- `questions.json`: 生成的问题
+- `answers.json`: 生成的答案
+- `optimized.json`: 优化后的问答对
+- `dataset-alpaca.json`: Alpaca 格式的数据集
+- `dataset-sharegpt.json`: ShareGPT 格式的数据集（如果配置了此输出格式）
 
-## Advanced Usage
+## 高级用法
 
-### API Service
+### API 服务
 
-Start the API service, providing a Web interface and RESTful API:
+启动 API 服务，提供 Web 界面和 RESTful API：
 
 ```bash
 python -m app.main
 ```
 
-Default address: http://localhost:8000
+默认地址：http://localhost:8000
 
-### Troubleshooting
+### 故障排除
 
-1. **Slow processing**: Increase MAX_LLM_CONCURRENCY or reduce LLM_MAX_TOKENS
-2. **Out of memory**: Reduce the number or size of documents being processed
-3. **API timeout**: Check network connection or reduce MAX_LLM_CONCURRENCY
+1. **处理速度慢**：增加 MAX_LLM_CONCURRENCY 值，或减少 LLM_MAX_TOKENS
+2. **内存不足**：减小处理的文档数量或文档大小
+3. **API 超时**：检查网络连接，或减少 MAX_LLM_CONCURRENCY
 
-## License
+## 许可证
 [Apache 2.0](LICENSE)
 
 ## Star History
