@@ -1,7 +1,24 @@
 import os
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+def reload_env():
+    """重新加载环境变量"""
+    # 获取项目根目录
+    root_dir = Path(__file__).parent.parent.parent
+    env_path = root_dir / '.env'
+    
+    # 重新加载环境变量
+    load_dotenv(env_path, override=True)
+    
+    # 更新配置
+    global OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_API_MODEL
+    OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
+    OPENAI_API_BASE = os.getenv('OPENAI_API_BASE')
+    OPENAI_API_MODEL = os.getenv('OPENAI_API_MODEL')
+
+# 初始加载环境变量
+reload_env()
 
 def parse_log_max_size(val):
     """
@@ -63,6 +80,8 @@ class Config:
     ENABLE_LABEL = os.getenv("ENABLE_LABEL", "False") == "True"
     ENABLE_OPTIMIZE = os.getenv("ENABLE_OPTIMIZE", "True") == "True"
     MAX_LLM_CONCURRENCY = int(os.getenv("MAX_LLM_CONCURRENCY", 10))
+    # Dataset config
+    DEFAULT_SAMPLE_SIZE = int(os.getenv("DEFAULT_SAMPLE_SIZE", "3"))
     # API
     DATA_PATH = os.getenv("DATA_PATH", "data/datasets.json")
     API_PREFIX = "/api"
