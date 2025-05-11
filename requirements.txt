@@ -9,3 +9,5 @@ tqdm==4.66.2
 textract==1.6.5
 openai==1.10.0
 asyncio==3.4.3 
+transformers
+datasets 

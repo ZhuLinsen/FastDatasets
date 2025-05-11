@@ -8,6 +8,10 @@ import httpx
 from tqdm.asyncio import tqdm as tqdm_async
 from app.core.logger import logger
 from app.core.config import config
+import random
+import time
+import logging
+from app.core.llm import AsyncLLM
 
 class DatasetBuilder:
     """数据集构建器，用于从文档块构建训练数据集"""
@@ -24,11 +28,20 @@ class DatasetBuilder:
         self.max_concurrency = config.MAX_LLM_CONCURRENCY
         self.semaphore = asyncio.Semaphore(self.max_concurrency)
         self.headers = {"Authorization": f"Bearer {self.api_key}"}
+        # 初始化LLM客户端
+        self.llm = AsyncLLM(
+            model_name=self.model_name,
+            base_url=self.base_url,
+            api_key=self.api_key,
+            language=self.language,
+            max_concurrency=self.max_concurrency,
+            system_prompt=self.system_prompt
+        )
         logger.info("DatasetBuilder 初始化")
 
     async def build_dataset(self, chunks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
-        构建数据集
+        构建数据集 - 全异步处理
         
         Args:
             chunks: 文档块列表
@@ -42,52 +55,183 @@ class DatasetBuilder:
             
         logger.info(f"开始构建数据集，共 {len(chunks)} 个文档块")
         
-        # 步骤 1: 为每个文档块生成问题
-        all_questions = []
-        for chunk in chunks:
-            questions = await self._generate_questions(chunk["content"], max(1, len(chunk["content"]) // 240))
-            for q in questions:
-                all_questions.append({
-                    "chunk_id": chunk.get('chunk_id', ''),
-                    "file": chunk.get('file', ''),
-                    "summary": chunk.get('summary', ''),
-                    "content": chunk.get('content', ''),
-                    "question": q
-                })
-        
-        # 步骤 2: 为每个问题生成答案
-        dataset = []
-        for item in all_questions:
-            # 生成答案和思维链
-            if self.enable_cot:
-                answer, cot = await asyncio.gather(
-                    self._generate_answer(item["question"], item["content"]),
-                    self._generate_cot(item["question"])
-                )
-                data_point = {**item, "answer": answer, "cot": cot}
-            else:
-                answer = await self._generate_answer(item["question"], item["content"])
-                data_point = {**item, "answer": answer}
-            
-            # 如果启用标签生成
-            if self.enable_label:
-                data_point["labels"] = await self._generate_labels(item["question"])
-            
-            # 如果启用答案优化
-            if self.enable_optimize:
-                if self.enable_cot:
-                    optimized_answer, optimized_cot = await asyncio.gather(
-                        self._optimize_answer(data_point["answer"]),
-                        self._optimize_cot(data_point["cot"])
-                    )
-                    data_point["answer"] = optimized_answer
-                    data_point["cot"] = optimized_cot
-                else:
-                    data_point["answer"] = await self._optimize_answer(data_point["answer"])
-            
-            dataset.append(data_point)
+        # 步骤 1: 并行为每个文档块生成问题
+        async def generate_questions_for_chunk(chunk):
+            try:
+                chunk_id = chunk.get('chunk_id', '')
+                file_name = chunk.get('file', '')
+                content = chunk.get('content', '')
+                summary = chunk.get('summary', '')
                 
-        logger.info(f"数据集构建完成，共 {len(dataset)} 个数据点")
+                # 根据文本长度确定问题数量
+                question_count = max(1, len(content) // 240)
+                
+                # 生成问题
+                questions = await self._generate_questions(content, question_count)
+                
+                # 返回问题列表，每个问题包含完整的块信息
+                return [{
+                    "chunk_id": chunk_id,
+                    "file": file_name,
+                    "summary": summary,
+                    "content": content,
+                    "question": q
+                } for q in questions]
+            except Exception as e:
+                logger.error(f"为文档块 {chunk.get('chunk_id', 'unknown')} 生成问题失败: {str(e)}")
+                return []  # 返回空列表而不是使整个处理失败
+        
+        # 并行处理所有文档块
+        chunk_tasks = [generate_questions_for_chunk(chunk) for chunk in chunks]
+        chunk_results = await tqdm_async.gather(*chunk_tasks, desc="生成问题")
+        
+        # 合并所有问题
+        all_questions = []
+        for result in chunk_results:
+            all_questions.extend(result)
+        
+        logger.info(f"已生成 {len(all_questions)} 个问题，开始生成答案...")
+        
+        # 步骤 2: 并行为每个问题生成答案和相关内容
+        async def process_question(item):
+            try:
+                # 获取问题和上下文
+                question = item["question"]
+                context = item["content"]
+                
+                # 定义要执行的任务
+                tasks = [self._generate_answer(question, context)]
+                
+                # 如果启用了思维链，添加到任务中
+                if self.enable_cot:
+                    tasks.append(self._generate_cot(question))
+                
+                # 如果启用了标签生成，添加到任务中
+                if self.enable_label:
+                    tasks.append(self._generate_labels(question))
+                
+                # 同时执行所有任务
+                results = await asyncio.gather(*tasks, return_exceptions=True)
+                
+                # 整理结果，处理可能的异常
+                data_point = dict(item)
+                
+                # 处理答案结果 (第一个任务)
+                if isinstance(results[0], Exception):
+                    logger.error(f"生成答案失败: {str(results[0])}")
+                    data_point["answer"] = f"处理过程中发生错误: {str(results[0])}"
+                    data_point["error"] = True
+                else:
+                    data_point["answer"] = results[0]
+                
+                # 处理其他任务结果
+                task_index = 1
+                if self.enable_cot:
+                    if isinstance(results[task_index], Exception):
+                        logger.error(f"生成思维链失败: {str(results[task_index])}")
+                        data_point["cot"] = f"处理过程中发生错误: {str(results[task_index])}"
+                    else:
+                        data_point["cot"] = results[task_index]
+                    task_index += 1
+                
+                if self.enable_label:
+                    if isinstance(results[task_index], Exception):
+                        logger.error(f"生成标签失败: {str(results[task_index])}")
+                        data_point["labels"] = ["错误"]
+                    else:
+                        data_point["labels"] = results[task_index]
+                    task_index += 1
+                
+                # 只有当没有错误且启用了优化时才执行优化任务
+                if self.enable_optimize and not data_point.get("error", False):
+                    optimize_tasks = []
+                    
+                    # 只优化没有错误的内容
+                    if "answer" in data_point and not isinstance(data_point["answer"], Exception):
+                        optimize_tasks.append(self._optimize_answer(data_point["answer"]))
+                    
+                    if self.enable_cot and "cot" in data_point and not isinstance(data_point["cot"], Exception):
+                        optimize_tasks.append(self._optimize_cot(data_point["cot"]))
+                    
+                    if optimize_tasks:
+                        optimize_results = await asyncio.gather(*optimize_tasks, return_exceptions=True)
+                        
+                        # 更新优化结果
+                        result_index = 0
+                        if "answer" in data_point and not isinstance(data_point["answer"], Exception):
+                            if not isinstance(optimize_results[result_index], Exception):
+                                data_point["answer"] = optimize_results[result_index]
+                            result_index += 1
+                        
+                        if self.enable_cot and "cot" in data_point and not isinstance(data_point["cot"], Exception):
+                            if not isinstance(optimize_results[result_index], Exception):
+                                data_point["cot"] = optimize_results[result_index]
+                
+                return data_point
+            except Exception as e:
+                logger.error(f"处理问题失败: {item.get('question', '')[:30]}... - {str(e)}")
+                # 返回一个带有错误标记的条目，而不是完全失败
+                return {
+                    **item,
+                    "answer": f"处理过程中发生错误: {str(e)}",
+                    "error": True
+                }
+        
+        # 动态计算最佳批处理大小
+        max_concurrency = getattr(self, 'max_concurrency', 10)
+        total_questions = len(all_questions)
+        
+        # 根据问题总数和并发数动态调整批处理大小
+        if total_questions <= max_concurrency:
+            # 问题数少于并发数，一次处理所有问题
+            batch_size = total_questions
+        elif total_questions <= max_concurrency * 3:
+            # 问题数适中，设置较大的批处理大小
+            batch_size = max(max_concurrency, total_questions // 2)
+        else:
+            # 问题数较多，使用较小的批处理大小避免内存问题
+            batch_size = min(30, max(5, max_concurrency))
+        
+        logger.info(f"使用批处理大小: {batch_size}, 总并发数: {max_concurrency}")
+        dataset = []
+        
+        # 计算总批次数
+        total_batches = (total_questions + batch_size - 1) // batch_size
+        for i in range(0, total_questions, batch_size):
+            batch = all_questions[i:i+batch_size]
+            batch_tasks = [process_question(item) for item in batch]
+            
+            # 使用tqdm显示进度
+            batch_desc = f"生成答案 [批次 {i//batch_size+1}/{total_batches}]"
+            batch_results = await tqdm_async.gather(*batch_tasks, desc=batch_desc)
+            
+            # 收集所有结果，包括有错误的（便于后期分析）
+            dataset.extend(batch_results)
+            
+            # 计算批次成功率
+            success_count = sum(1 for item in batch_results if not item.get("error", False))
+            if batch_results:
+                success_rate = success_count / len(batch_results) * 100
+                logger.info(f"批次 {i//batch_size+1}/{total_batches} 完成: "
+                           f"成功率 {success_rate:.1f}% ({success_count}/{len(batch_results)})")
+            
+            # 短暂休息，避免API限制
+            if i + batch_size < total_questions:
+                await asyncio.sleep(0.5)
+        
+        # 最终统计
+        success_count = sum(1 for item in dataset if not item.get("error", False))
+        error_count = sum(1 for item in dataset if item.get("error", False))
+        
+        logger.info(f"数据集构建完成，共 {len(dataset)} 个数据点 "
+                  f"(成功: {success_count}, 失败: {error_count})")
+        
+        # 可选：过滤掉出错的数据点
+        if error_count > 0:
+            clean_dataset = [item for item in dataset if not item.get("error", False)]
+            logger.info(f"已过滤 {error_count} 个失败的数据点，最终数据集大小: {len(clean_dataset)}")
+            return clean_dataset
+        
         return dataset
     
     def save_dataset(self, dataset: List[Dict[str, Any]], output_path: str):
@@ -215,96 +359,6 @@ class DatasetBuilder:
         text = re.sub(r"^Optimized COT content[:：]?\s*", "", text)
         return text.strip()
     
-    async def _call_llm(self, prompt: str, max_tokens: int = 4096) -> str:
-        """调用 LLM API"""
-        async with self.semaphore:
-            # 确保从环境变量获取最新的 API 配置
-            api_key = os.getenv("API_KEY") or config.API_KEY
-            base_url = os.getenv("BASE_URL") or config.BASE_URL
-            model_name = os.getenv("MODEL_NAME") or config.MODEL_NAME
-            
-            # 更新当前实例的设置
-            self.api_key = api_key
-            self.base_url = base_url
-            self.model_name = model_name
-            
-            # 确保 API URL 格式正确
-            if self.base_url and not self.base_url.startswith(('http://', 'https://')):
-                self.base_url = f"https://{self.base_url}"
-                
-            # 检查必要参数
-            if not self.api_key or not self.base_url or not self.model_name:
-                logger.error("缺少必要的 LLM 配置参数")
-                return self._fallback_response(prompt)
-            
-            retries = 3  # 最大重试次数
-            backoff_factor = 1.5  # 退避因子
-            
-            for attempt in range(retries):
-                try:
-                    timeout = 60 * (2 if attempt == 0 else attempt * 2)  # 第一次 120 秒，然后逐步增加
-                    
-                    async with httpx.AsyncClient(timeout=timeout) as client:
-                        logger.info(f"调用 LLM API (尝试 {attempt+1}/{retries}): {self.base_url}")
-                        
-                        data = {
-                            "model": self.model_name,
-                            "messages": [{"role": "user", "content": prompt}],
-                            "max_tokens": max_tokens
-                        }
-                        
-                        # 确保 Headers 正确
-                        headers = {"Authorization": f"Bearer {self.api_key}"}
-                        
-                        try:
-                            resp = await client.post(f"{self.base_url}/chat/completions", 
-                                                  headers=headers, 
-                                                  json=data, 
-                                                  follow_redirects=True)
-                            resp.raise_for_status()
-                            content = resp.json()["choices"][0]["message"]["content"]
-                            return content.strip()
-                        except httpx.HTTPStatusError as e:
-                            logger.error(f"HTTP 错误: {e.response.status_code} - {e.response.text}")
-                            if e.response.status_code == 401:
-                                logger.error("API 密钥错误或未授权")
-                                # 认证错误不重试
-                                break
-                            elif e.response.status_code == 429:
-                                logger.warning("请求频率限制，将重试")
-                            raise
-                        
-                except (httpx.ConnectError, httpx.ConnectTimeout) as e:
-                    if attempt < retries - 1:
-                        wait_time = backoff_factor * (2 ** attempt)
-                        logger.warning(f"连接错误: {str(e)}，将在 {wait_time:.1f} 秒后重试...")
-                        await asyncio.sleep(wait_time)
-                    else:
-                        logger.error(f"连接失败，已达到最大重试次数: {str(e)}")
-                        
-                except Exception as e:
-                    logger.error(f"调用 LLM API 失败: {str(e)}")
-                    import traceback
-                    logger.error(traceback.format_exc())
-                    if attempt < retries - 1:
-                        wait_time = backoff_factor * (2 ** attempt)
-                        logger.warning(f"将在 {wait_time:.1f} 秒后重试...")
-                        await asyncio.sleep(wait_time)
-                    else:
-                        logger.error("已达到最大重试次数")
-            
-            return self._fallback_response(prompt)
-    
-    def _fallback_response(self, prompt: str) -> str:
-        """当 LLM API 调用失败时的后备响应"""
-        logger.warning("使用模拟回复代替 LLM 响应")
-        if "question" in prompt.lower():
-            return json.dumps(["这是一个示例问题？", "这是另一个示例问题？"])
-        elif "answer" in prompt.lower():
-            return "这是一个示例回答，由于无法连接到 LLM API 而生成的模拟内容。"
-        else:
-            return "模拟 LLM 响应"
-
     async def _generate_questions(self, context: str, number: int = 5) -> List[str]:
         """生成问题"""
         logger.info(f"生成问题: 生成 {number} 个问题...")
@@ -388,8 +442,8 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 - Questions should not be related to the material itself. For example, questions related to the author, chapters, table of contents, etc. are prohibited.
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
+        # 调用统一的LLM服务
+        content = await self.llm.call_llm_advanced(prompt)
         
         try:
             # 尝试解析 JSON
@@ -472,8 +526,8 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 3. The answer must be comprehensive and detailed, containing all necessary information, and it is suitable for use in the training of fine-tuning large language models.
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
+        # 调用统一的LLM服务
+        content = await self.llm.call_llm_advanced(prompt)
         
         try:
             if content.startswith('['):
@@ -524,9 +578,8 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 <think>First... Then... Finally...</think>
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
-        return content
+        # 调用统一的LLM服务
+        return await self.llm.call_llm_advanced(prompt)
 
     async def _generate_labels(self, question: str) -> List[str]:
         """生成标签"""
@@ -570,8 +623,8 @@ Generate 2-3 relevant domain labels for this question. These labels should be ab
 ]
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
+        # 调用统一的LLM服务
+        content = await self.llm.call_llm_advanced(prompt)
         
         try:
             labels = json.loads(content)
@@ -620,8 +673,8 @@ Generate 2-3 relevant domain labels for this question. These labels should be ab
 Please output only the optimized answer content, without any extra prefix or title.
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
+        # 调用统一的LLM服务
+        content = await self.llm.call_llm_advanced(prompt)
         return self._clean_optimized_output(content)
 
     async def _optimize_cot(self, cot: str) -> str:
@@ -662,6 +715,6 @@ Please output only the optimized answer content, without any extra prefix or tit
 Please output only the optimized COT content, without any extra prefix or title.
 """
         
-        # 调用 LLM
-        content = await self._call_llm(prompt)
+        # 调用统一的LLM服务
+        content = await self.llm.call_llm_advanced(prompt)
         return self._clean_optimized_output(content) 
