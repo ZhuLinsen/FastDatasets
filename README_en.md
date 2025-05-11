@@ -2,20 +2,23 @@
 
 ![FastDatasets](fastdatasets.png)
 
-- A powerful tool for creating high-quality training datasets for Large Language Models (LLMs)（一个快速生成高质量LLM训练数据集的工具）
+A powerful tool for creating high-quality training datasets for Large Language Models (LLMs) | [切换到中文](README.md)
 
-[切换到中文](README.md)
+## Main Features
 
-## Features
+### 1. Document-Based Dataset Generation
+- **Intelligent Document Processing**: Supports intelligent segmentation of various document formats
+- **Question Generation**: Automatically generates relevant questions based on document content
+- **Answer Generation**: Uses LLM to generate high-quality answers
+- **Asynchronous Processing**: Supports asynchronous processing of large-scale documents
+- **Multiple Export Formats**: Supports multiple dataset format exports (Alpaca, ShareGPT)
+- **Direct SFT-Ready Output**: Generates datasets suitable for supervised fine-tuning
 
-- **Intelligent Document Processing**: Smart segmentation of multiple document formats
-- **Question Generation**: Automatic generation of relevant questions based on document content  
-- **Answer Generation**: High-quality answers using LLM
-- **Asynchronous Processing**: Supports large-scale document processing
-- **Multiple Export Formats**: Supports various dataset formats (Alpaca, ShareGPT, etc.)
-- **Direct SFT-ready Output**: Generates datasets ready for supervised fine-tuning
-- **LLM Configuration Validation**: Built-in tool to test LLM API connections and capabilities
-- **RESTful API**: Complete API interface
+### 2. Data Distillation and Optimization
+- **Dataset Distillation**: Extracts and optimizes training data from existing datasets
+- **Instruction Augmentation**: Automatically generates instruction variants to expand training data
+- **Quality Optimization**: Uses LLM to optimize and improve data quality
+- **Multi-format Support**: Supports distillation from datasets in various formats
 
 ## Quick Start
 
@@ -37,45 +40,60 @@ conda activate fast_datasets
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Create environment configuration file
+cp .env.example .env
+# Edit the .env file to configure your LLM API and other settings
 ```
 
-### Usage Example
+### Usage Examples
 
-The project includes a test document. You can quickly test with:
-1. edit .env file and configure your LLM
-you can use the following command to test your LLM connection and capabilities:
+1. First, configure your LLM
 ```bash
+# Create and edit .env file by copying from .env.example
+cp .env.example .env
+# Edit .env file and configure your LLM API
+# LLM_API_KEY=your_api_key_here
+# LLM_API_BASE=https://api.deepseek.com/v1 (or other model API URL)
+
+# Test LLM connection and capabilities
 python scripts/test_llm.py
 ```
 
-2. run the following command to generate dataset from test document
-
+2. Generate dataset from documents
 ```bash
-# Generate dataset from test document
+# Generate dataset using test document
 python scripts/dataset_generator.py tests/1706.03762v7.pdf -o ./output
-```
 
-This command processes the "Attention is All You Need" paper (test document) and generates a dataset in the ./output directory.
-
-### Custom Documents
-
-```bash
-# Process a single document
+# Process custom document
 python scripts/dataset_generator.py path/to/your/document.pdf -o ./output_directory
 
 # Process all documents in a directory
 python scripts/dataset_generator.py path/to/document/directory/ -o ./output_directory
 ```
 
-### Supported Formats
+3. Create training datasets using knowledge distillation
+```bash
+# Extract questions from Huggingface dataset and generate high-quality answers
+python scripts/distill_dataset.py --mode distill --dataset_name open-r1/s1K-1.1 --sample_size 10
+
+# Generate variants from high-quality samples and distill knowledge (optional)
+python scripts/distill_dataset.py --mode augment --high_quality_file data/high_quality_samples.json --num_aug 3
+```
+
+For more detailed usage, please refer to: [Knowledge Distillation Guide](docs/knowledge_distillation.md) | [Document Processing and Dataset Generation](docs/custom_data_conversion.md)
+
+### Supported Document Formats
 
 - PDF (*.pdf)
 - Word (*.docx)
 - Markdown (*.md)
 - Plain text (*.txt)
+- Other mainstream document formats
 
 ## Output Structure
 
+### Document Processing Output
 After processing, the following files are generated in the output directory:
 
 - `chunks.json`: Text chunks after document segmentation
@@ -84,6 +102,13 @@ After processing, the following files are generated in the output directory:
 - `optimized.json`: Optimized QA pairs
 - `dataset-alpaca.json`: Dataset in Alpaca format
 - `dataset-sharegpt.json`: Dataset in ShareGPT format (if configured)
+
+### Data Distillation Output
+The data distillation process creates a timestamp subdirectory in the output directory and generates the following files:
+
+- `distilled.json`: Original data after distillation
+- `distilled-alpaca.json`: Distilled data in Alpaca format
+- `distilled-sharegpt.json`: Distilled data in ShareGPT format
 
 ## Advanced Usage
 
