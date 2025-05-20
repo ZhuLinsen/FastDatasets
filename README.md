@@ -64,7 +64,7 @@ python scripts/test_llm.py
 2. 从文档生成数据集
 ```bash
 # 使用测试文档生成数据集
-python scripts/dataset_generator.py tests/1706.03762v7.pdf -o ./output
+python scripts/dataset_generator.py tests/test.txt -o ./output
 
 # 处理自定义文档
 python scripts/dataset_generator.py 路径/到/你的文档.pdf -o ./输出目录

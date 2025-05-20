@@ -63,7 +63,7 @@ python scripts/test_llm.py
 2. Generate dataset from documents
 ```bash
 # Generate dataset using test document
-python scripts/dataset_generator.py tests/1706.03762v7.pdf -o ./output
+python scripts/dataset_generator.py tests/test.txt -o ./output
 
 # Process custom document
 python scripts/dataset_generator.py path/to/your/document.pdf -o ./output_directory
