@@ -24,7 +24,18 @@ class AsyncLLM:
     # 保持原有的简单接口，但内部使用高级实现
     async def call_llm(self, prompt, max_tokens=2048*2):
         """原始的简单LLM调用接口，保持向后兼容"""
-        return await self.call_llm_advanced(prompt=prompt, max_tokens=max_tokens)
+        response = await self.call_llm_advanced(prompt=prompt, max_tokens=max_tokens)
+        
+        # 从响应中提取内容，保持向后兼容性
+        try:
+            if isinstance(response, dict) and 'choices' in response:
+                content = response['choices'][0]['message']['content'].strip()
+                return content
+            # 处理可能的错误或其他响应格式
+            return str(response)
+        except Exception as e:
+            logger.error(f"从响应中提取内容失败: {str(e)}")
+            return str(response) if response else "无法获取响应内容"
     
     async def call_llm_advanced(self, prompt, max_tokens=2048*2, retries=8, backoff_factor=1.8, 
                                  dynamic_timeout=True, return_exceptions=False):
@@ -117,22 +128,13 @@ class AsyncLLM:
                             
                             # 解析响应
                             response_json = resp.json()
-                            content = response_json["choices"][0]["message"]["content"]
+                            print(f"完整响应: {response_json}")
                             
-                            # 查找可能的token使用情况信息
-                            token_info = ""
-                            if "usage" in response_json:
-                                usage = response_json["usage"]
-                                token_info = f", 使用了 {usage.get('prompt_tokens', 0)} 输入token, {usage.get('completion_tokens', 0)} 输出token"
+                            # 处理响应格式，返回完整的响应JSON，方便处理推理内容
+                            logger.debug(f"[{request_id}] 请求成功，耗时 {elapsed:.2f}秒")
                             
-                            logger.debug(f"[{request_id}] 请求成功，耗时 {elapsed:.2f}秒，输出长度: {len(content)}{token_info}")
-                            
-                            # 可选: 显示输出前几个字符用于调试
-                            if isinstance(logging.getLogger().level, int) and logging.getLogger().level <= logging.DEBUG:
-                                preview = content[:50].replace('\n', ' ') + "..." if len(content) > 50 else content
-                                logger.debug(f"[{request_id}] 输出预览: {preview}")
-                                
-                            return content.strip()
+                            # 返回完整响应JSON
+                            return response_json
                             
                         except httpx.HTTPStatusError as e:
                             elapsed = time.time() - start_time

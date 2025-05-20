@@ -82,7 +82,7 @@ async def main():
     parser.add_argument("--file-format", help="输出文件格式(json或jsonl)", 
                         default=getattr(config, 'OUTPUT_FILE_FORMAT', 'jsonl'))
     parser.add_argument("--file-concurrency", help="文件并发处理数量", 
-                        type=int, default=5)
+                        type=int, default=16)
     args = parser.parse_args()
     
     # 更新配置
@@ -113,7 +113,7 @@ async def main():
             logger.info(f"找到 {len(file_paths)} 个文件待处理，开始批量处理...")
             
             # 设置最大并发数
-            max_concurrent = min(args.file_concurrency, 8)  # 限制文件处理的并发数
+            max_concurrent = min(args.file_concurrency, 16)  # 限制文件处理的并发数
             sem = asyncio.Semaphore(max_concurrent)
             
             async def process_with_semaphore(file_path):

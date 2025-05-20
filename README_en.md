@@ -39,7 +39,7 @@ conda create -n fast_datasets python=3.10
 conda activate fast_datasets
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e .
 
 # Create environment configuration file
 cp .env.example .env

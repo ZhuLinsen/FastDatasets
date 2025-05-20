@@ -79,6 +79,7 @@ class Config:
     ENABLE_COT = os.getenv("ENABLE_COT", "False") == "True"
     ENABLE_LABEL = os.getenv("ENABLE_LABEL", "False") == "True"
     ENABLE_OPTIMIZE = os.getenv("ENABLE_OPTIMIZE", "True") == "True"
+    ENABLE_REASONING_CONTENT = os.getenv("ENABLE_REASONING_CONTENT", "False") == "True"
     MAX_LLM_CONCURRENCY = int(os.getenv("MAX_LLM_CONCURRENCY", 10))
     # Dataset config
     DEFAULT_SAMPLE_SIZE = int(os.getenv("DEFAULT_SAMPLE_SIZE", "3"))
