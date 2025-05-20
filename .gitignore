@@ -181,3 +181,5 @@ data/*.json
 .idea/
 .vscode/
 .DS_Store
+
+output/

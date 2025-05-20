@@ -122,7 +122,42 @@ class DatasetBuilder:
                     data_point["answer"] = f"处理过程中发生错误: {str(results[0])}"
                     data_point["error"] = True
                 else:
-                    data_point["answer"] = results[0]
+                    print(f"\n=== 处理答案结果 ===")
+                    print(f"结果类型: {type(results[0])}")
+                    if isinstance(results[0], dict):
+                        for k, v in results[0].items():
+                            if isinstance(v, str):
+                                print(f"{k}: {v[:100]}...")
+                            else:
+                                print(f"{k}: {type(v)}")
+                    else:
+                        print(f"结果内容: {str(results[0])[:100]}...")
+                    
+                    # 处理新的答案格式
+                    if isinstance(results[0], dict):
+                        if 'choices' in results[0]:
+                            # 直接处理API返回的JSON
+                            print("处理API原始返回")
+                            message = results[0]['choices'][0]['message']
+                            data_point["answer"] = message.get('content', '').strip()
+                            if 'reasoning_content' in message:
+                                print(f"找到推理内容: {message['reasoning_content'][:50]}...")
+                                data_point["reasoning_content"] = message['reasoning_content'].strip()
+                        elif 'content' in results[0]:
+                            # 处理格式化后的返回
+                            print("处理格式化返回")
+                            data_point["answer"] = results[0]['content']
+                            if 'reasoning_content' in results[0]:
+                                print(f"找到推理内容: {results[0]['reasoning_content'][:50]}...")
+                                data_point["reasoning_content"] = results[0]['reasoning_content']
+                        else:
+                            # 无法识别的格式
+                            print("无法识别的字典格式，直接使用字符串表示")
+                            data_point["answer"] = str(results[0])
+                    else:
+                        # 简单字符串返回
+                        print("处理简单字符串返回")
+                        data_point["answer"] = results[0]
                 
                 # 处理其他任务结果
                 task_index = 1
@@ -294,15 +329,33 @@ class DatasetBuilder:
     
     def _export_alpaca(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """导出为 Alpaca 格式"""
-        return [
-            {
+        result = []
+        for item in data:
+            # 打印调试信息
+            print(f"\n=== 处理数据点 ===")
+            print(f"问题: {item['question'][:50]}...")
+            print(f"回答: {item['answer'][:50]}...")
+            print(f"reasoning_content存在: {'reasoning_content' in item}")
+            if 'reasoning_content' in item:
+                print(f"reasoning_content: {item['reasoning_content'][:50]}...")
+            print(f"config.ENABLE_REASONING_CONTENT: {config.ENABLE_REASONING_CONTENT}")
+            
+            # 构建输出
+            output = ""
+            if config.ENABLE_REASONING_CONTENT and 'reasoning_content' in item:
+                print("添加推理内容到输出")
+                output = f"<think>\n{item.get('reasoning_content', '')}\n</think>\n\n{self._clean_markdown_json(item['answer'])}"
+            else:
+                output = self._clean_markdown_json(item["answer"])
+            
+            result.append({
                 "instruction": self._clean_markdown_json(item["question"]),
                 "input": "",
-                "output": self._clean_optimized_output(self._clean_markdown_json(item["answer"])),
+                "output": self._clean_optimized_output(output),
                 "system": self.system_prompt or ""
-            }
-            for item in data
-        ]
+            })
+            
+        return result
     
     def _export_sharegpt(self, data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """导出为 ShareGPT 格式"""
@@ -443,20 +496,46 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 """
         
         # 调用统一的LLM服务
-        content = await self.llm.call_llm_advanced(prompt)
+        response = await self.llm.call_llm_advanced(prompt)
+        
+        print(f"\n=== 生成问题API响应 ===\n{response}\n=================\n")
         
         try:
-            # 尝试解析 JSON
-            questions = json.loads(content)
-            if isinstance(questions, list):
-                return [self._clean_markdown_json(str(q)) for q in questions if str(q).strip()]
+            # 处理API响应
+            if isinstance(response, dict) and 'choices' in response:
+                content = response['choices'][0]['message']['content']
+                # 尝试解析JSON
+                try:
+                    questions = json.loads(content)
+                    if isinstance(questions, list):
+                        return [self._clean_markdown_json(str(q)) for q in questions if str(q).strip()]
+                    else:
+                        # 可能返回的是包含问题的对象
+                        return [self._clean_markdown_json(content)]
+                except Exception as e:
+                    print(f"解析问题JSON失败: {str(e)}")
+                    # Fallback: 尝试用换行分割
+                    lines = [line.strip() for line in self._clean_markdown_json(content).split('\n') if line.strip()]
+                    return lines if lines else [self._clean_markdown_json(content)]
             else:
-                # 可能返回的是包含问题的对象
-                return [self._clean_markdown_json(content)]
-        except Exception:
-            # Fallback: 尝试用换行分割
-            lines = [line.strip() for line in self._clean_markdown_json(content).split('\n') if line.strip()]
-            return lines if lines else [self._clean_markdown_json(content)]
+                # 旧版响应处理
+                content = str(response)
+                try:
+                    # 尝试解析 JSON
+                    questions = json.loads(content)
+                    if isinstance(questions, list):
+                        return [self._clean_markdown_json(str(q)) for q in questions if str(q).strip()]
+                    else:
+                        # 可能返回的是包含问题的对象
+                        return [self._clean_markdown_json(content)]
+                except Exception:
+                    # Fallback: 尝试用换行分割
+                    lines = [line.strip() for line in self._clean_markdown_json(content).split('\n') if line.strip()]
+                    return lines if lines else [self._clean_markdown_json(content)]
+        except Exception as e:
+            logger.error(f"处理生成问题响应失败: {str(e)}")
+            # 出错时返回一个默认问题，避免整个流程中断
+            return [f"关于文本内容的问题 {number}"]
 
     async def _generate_answer(self, question: str, context: str) -> str:
         """生成答案"""
@@ -492,27 +571,26 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 ## Constrains:
 1. 答案必须基于给定的内容
 2. 答案必须准确，必须与问题相关，不能胡编乱造
-3. 答案必须充分、详细、包含所有必要的信息、适合微调大模型训练使用
-4. 答案中不得出现 ' 参考 / 依据 / 文献中提到 ' 等任何引用性表述，只需呈现最终结
 """
         else:
             prompt = f"""
 # Role: Fine-tuning Dataset Generation Expert
 ## Profile:
-- Description: You are an expert in generating fine-tuning datasets, skilled at generating accurate answers to questions from the given content, ensuring the accuracy and relevance of the answers.
+- Description: You are a fine-tuning dataset generation expert, skilled at generating accurate question-answer pairs from given content, ensuring answer accuracy and relevance. You should directly answer user questions, with all information internalized as your professional knowledge.
 
 ## Skills:
-1. The answer must be based on the given content.
-2. The answer must be accurate and not fabricated.
-3. The answer must be relevant to the question.
-4. The answer must be logical.
+1. Answers must be based on the given content
+2. Answers must be accurate, no fabrication
+3. Answers must be relevant to the question
+4. Answers must be logical
+5. Based on the given reference content, integrate into a complete answer using natural and fluent language, no need to mention source or citation marks
 
 ## Workflow:
 1. Take a deep breath and work on this problem step-by-step.
-2. First, analyze the given file content.
-3. Then, extract key information from the content.
-4. Next, generate an accurate answer related to the question.
-5. Finally, ensure the accuracy and relevance of the answer.
+2. First, analyze the given content
+3. Then, extract key information from the content
+4. Next, generate accurate answers related to the question
+5. Finally, ensure answer accuracy and relevance
 
 ## Reference Content:
 {context}
@@ -520,25 +598,31 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 ## Question
 {question}
 
-## Constrains:
-1. The answer must be based on the given content.
-2. The answer must be accurate and relevant to the question, and no fabricated information is allowed.
-3. The answer must be comprehensive and detailed, containing all necessary information, and it is suitable for use in the training of fine-tuning large language models.
+## Constraints:
+1. Answers must be based on the given content
+2. Answers must be accurate and relevant to the question, no fabrication
 """
         
         # 调用统一的LLM服务
-        content = await self.llm.call_llm_advanced(prompt)
+        response = await self.llm.call_llm_advanced(prompt)
         
-        try:
-            if content.startswith('['):
-                answer_list = json.loads(content)
-                answer = answer_list[0] if answer_list else ""
-            else:
-                answer = content
-        except Exception:
-            answer = content
+        # 打印原始响应，用于调试
+        print(f"\n=== API响应 ===\n{response}\n=================\n")
         
-        return self._clean_markdown_json(answer)
+        # 处理响应
+        if isinstance(response, dict) and 'choices' in response:
+            message = response['choices'][0]['message']
+            content = message.get('content', '').strip()
+            reasoning_content = message.get('reasoning_content', '').strip()
+            
+            # 如果启用了推理内容且存在推理内容，则返回包含推理内容的字典
+            if config.ENABLE_REASONING_CONTENT and reasoning_content:
+                return {
+                    'content': content,
+                    'reasoning_content': reasoning_content
+                }
+            return content
+        return str(response)
 
     async def _generate_cot(self, question: str) -> str:
         """生成思维链"""
@@ -579,7 +663,19 @@ Based on the text provided by the user(length: {len(context)} characters), gener
 """
         
         # 调用统一的LLM服务
-        return await self.llm.call_llm_advanced(prompt)
+        response = await self.llm.call_llm_advanced(prompt)
+        
+        # 处理响应格式
+        try:
+            if isinstance(response, dict) and 'choices' in response:
+                content = response['choices'][0]['message']['content'].strip()
+            else:
+                content = str(response)
+        except Exception as e:
+            logger.error(f"处理优化思维链响应失败: {str(e)}")
+            content = str(response)
+            
+        return self._clean_optimized_output(content)
 
     async def _generate_labels(self, question: str) -> List[str]:
         """生成标签"""
@@ -624,8 +720,18 @@ Generate 2-3 relevant domain labels for this question. These labels should be ab
 """
         
         # 调用统一的LLM服务
-        content = await self.llm.call_llm_advanced(prompt)
+        response = await self.llm.call_llm_advanced(prompt)
         
+        # 处理响应格式
+        try:
+            if isinstance(response, dict) and 'choices' in response:
+                content = response['choices'][0]['message']['content'].strip()
+            else:
+                content = str(response)
+        except Exception as e:
+            logger.error(f"处理标签响应失败: {str(e)}")
+            content = str(response)
+            
         try:
             labels = json.loads(content)
             if isinstance(labels, list):
@@ -674,7 +780,18 @@ Please output only the optimized answer content, without any extra prefix or tit
 """
         
         # 调用统一的LLM服务
-        content = await self.llm.call_llm_advanced(prompt)
+        response = await self.llm.call_llm_advanced(prompt)
+        
+        # 处理响应格式
+        try:
+            if isinstance(response, dict) and 'choices' in response:
+                content = response['choices'][0]['message']['content'].strip()
+            else:
+                content = str(response)
+        except Exception as e:
+            logger.error(f"处理优化答案响应失败: {str(e)}")
+            content = str(response)
+            
         return self._clean_optimized_output(content)
 
     async def _optimize_cot(self, cot: str) -> str:

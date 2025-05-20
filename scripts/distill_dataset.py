@@ -458,7 +458,7 @@ async def amain():
                       help='是否将推理内容包含在输出中')
     parser.add_argument('--use_llm', action='store_true', default=True, 
                       help='是否使用LLM进行指令扩增')
-    parser.add_argument('--max_output_tokens', type=int, default=512, 
+    parser.add_argument('--max_output_tokens', type=int, default=4096, 
                       help='LLM输出的最大token数')
     parser.add_argument('--skip_generation', action='store_true',
                       help='是否跳过输出生成阶段（保留数据集原始输出）')
@@ -515,6 +515,7 @@ async def amain():
             print(f"\n开始使用 {config.MODEL_NAME} 进行知识蒸馏...")
             # 使用大模型生成输出
             results = await distiller.generate_outputs(samples, max_new_tokens=args.max_output_tokens)
+            print(f"完整输出: {results}")
             print(f"已生成 {len(results)} 条数据的输出")
             
             # 用生成的输出替换原始输出

@@ -108,8 +108,14 @@ async def test_llm_capabilities(api_key=None, base_url=None, model_name=None):
                                      headers=headers, 
                                      json=data, 
                                      follow_redirects=True)
-            resp.raise_for_status()
+            resp.raise_for_status()            
+            print(f"=================\nresp.json(): {resp.json()}\n=================")
             content = resp.json()["choices"][0]["message"]["content"].strip()
+            
+            # 处理推理内容
+            if config.ENABLE_REASONING_CONTENT and "reasoning_content" in resp.json()["choices"][0]["message"]:
+                reasoning_content = resp.json()["choices"][0]["message"]["reasoning_content"].strip()
+                content = f"<think>\n{reasoning_content}\n</think>\n\n{content}"
             
             console.print("[bold green]LLM 功能测试成功！[/bold green]")
             console.print(Panel(content, title="生成的问题", border_style="green"))
