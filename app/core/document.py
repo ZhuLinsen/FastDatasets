@@ -71,7 +71,7 @@ class DocumentProcessor:
         
         # 处理 Markdown 文档
         if file_path.lower().endswith('.md'):
-            return self._process_markdown(file_path, content)
+            return self._process_markdown(Path(file_path), content)
             
         # 分割文档
         chunks = self._split_text(content, chunk_size, chunk_overlap)
@@ -349,4 +349,4 @@ class DocumentProcessor:
                 chunks.append(chunk)
                 i += chunk_size - chunk_overlap
                 
-        return chunks 
+        return chunks
