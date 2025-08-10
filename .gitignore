@@ -183,3 +183,6 @@ data/*.json
 .DS_Store
 
 output/
+
+paper/
+exports/

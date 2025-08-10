@@ -504,34 +504,40 @@ Based on the text provided by the user(length: {len(context)} characters), gener
             # 处理API响应
             if isinstance(response, dict) and 'choices' in response:
                 content = response['choices'][0]['message']['content']
+                # 先清理markdown代码块
+                cleaned_content = self._clean_markdown_json(content)
                 # 尝试解析JSON
                 try:
-                    questions = json.loads(content)
+                    questions = json.loads(cleaned_content)
                     if isinstance(questions, list):
-                        return [self._clean_markdown_json(str(q)) for q in questions if str(q).strip()]
+                        return [str(q).strip() for q in questions if str(q).strip()]
                     else:
                         # 可能返回的是包含问题的对象
-                        return [self._clean_markdown_json(content)]
+                        return [cleaned_content]
                 except Exception as e:
                     print(f"解析问题JSON失败: {str(e)}")
+                    print(f"原始内容: {content}")
+                    print(f"清理后内容: {cleaned_content}")
                     # Fallback: 尝试用换行分割
-                    lines = [line.strip() for line in self._clean_markdown_json(content).split('\n') if line.strip()]
-                    return lines if lines else [self._clean_markdown_json(content)]
+                    lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
+                    return lines if lines else [cleaned_content]
             else:
                 # 旧版响应处理
                 content = str(response)
+                # 先清理markdown代码块
+                cleaned_content = self._clean_markdown_json(content)
                 try:
                     # 尝试解析 JSON
-                    questions = json.loads(content)
+                    questions = json.loads(cleaned_content)
                     if isinstance(questions, list):
-                        return [self._clean_markdown_json(str(q)) for q in questions if str(q).strip()]
+                        return [str(q).strip() for q in questions if str(q).strip()]
                     else:
                         # 可能返回的是包含问题的对象
-                        return [self._clean_markdown_json(content)]
+                        return [cleaned_content]
                 except Exception:
                     # Fallback: 尝试用换行分割
-                    lines = [line.strip() for line in self._clean_markdown_json(content).split('\n') if line.strip()]
-                    return lines if lines else [self._clean_markdown_json(content)]
+                    lines = [line.strip() for line in cleaned_content.split('\n') if line.strip()]
+                    return lines if lines else [cleaned_content]
         except Exception as e:
             logger.error(f"处理生成问题响应失败: {str(e)}")
             # 出错时返回一个默认问题，避免整个流程中断
@@ -834,4 +840,4 @@ Please output only the optimized COT content, without any extra prefix or title.
         
         # 调用统一的LLM服务
         content = await self.llm.call_llm_advanced(prompt)
-        return self._clean_optimized_output(content) 
+        return self._clean_optimized_output(content)

@@ -112,9 +112,55 @@ The data distillation process creates a timestamp subdirectory in the output dir
 
 ## Advanced Usage
 
+### Web Interface Usage
+
+Start the Web interface for visual document processing and dataset generation:
+
+```bash
+# Enter the web directory
+cd web
+
+# Start the Web application
+python web_app.py
+```
+
+Default address: http://localhost:7860
+
+#### Web Interface Features
+
+1. **File Upload**: Support drag-and-drop or click to upload various document formats
+   - Supports PDF, Word, Markdown, plain text, and other formats
+   - Can upload multiple files for batch processing
+
+2. **Parameter Configuration**:
+   - **Text Chunking Settings**: Configure minimum/maximum chunk length
+   - **Output Format Selection**: Support Alpaca, ShareGPT, and other formats
+   - **LLM Configuration**: Set API Key, Base URL, model name
+   - **Concurrency Control**: Adjust LLM and file processing concurrency
+   - **Advanced Options**: Enable Chain of Thought (CoT), set questions per chunk
+
+3. **Real-time Processing Monitoring**:
+   - Display processing progress and current status
+   - Real-time processing log updates
+   - Show processed file count and remaining time
+
+4. **Result Management**:
+   - View generated QA pair count and quality
+   - Download generated dataset files
+   - Support multiple dataset format exports
+
+#### Usage Steps
+
+1. **Configure Environment**: Ensure proper configuration of LLM API information in `.env` file
+2. **Start Service**: Run `python web_app.py` to start the Web interface
+3. **Upload Files**: Upload documents to be processed in the interface
+4. **Configure Parameters**: Adjust processing parameters as needed
+5. **Start Processing**: Click the start processing button and monitor progress in real-time
+6. **Download Results**: Download generated datasets after processing completion
+
 ### API Service
 
-Start the API service, providing a Web interface and RESTful API:
+Start the RESTful API service:
 
 ```bash
 python -m app.main
@@ -133,4 +179,4 @@ Default address: http://localhost:8000
 
 ## Star History
 
-[![Star History Chart](https://api.star-history.com/svg?repos=ZhuLinsen/FastDatasets&type=Date)](https://www.star-history.com/#ZhuLinsen/FastDatasets&Date) 
+[![Star History Chart](https://api.star-history.com/svg?repos=ZhuLinsen/FastDatasets&type=Date)](https://www.star-history.com/#ZhuLinsen/FastDatasets&Date)

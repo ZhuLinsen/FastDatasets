@@ -43,9 +43,9 @@ class AsyncLLM:
         # 异步信号量控制
         async with self.semaphore:
             # 重新从环境变量获取配置，确保使用最新设置
-            api_key = os.getenv("API_KEY") or self.api_key
-            base_url = os.getenv("BASE_URL") or self.base_url
-            model_name = os.getenv("MODEL_NAME") or self.model_name
+            api_key = os.getenv("LLM_API_KEY") or self.api_key
+            base_url = os.getenv("LLM_API_BASE") or self.base_url
+            model_name = os.getenv("LLM_MODEL") or self.model_name
             
             # 更新当前实例的设置
             self.api_key = api_key
@@ -226,4 +226,4 @@ class DummyLLM:
         return f"LLM output: {prompt}"
 
 # 便于后续切换不同LLM
-llm = AsyncLLM() 
+llm = AsyncLLM()
