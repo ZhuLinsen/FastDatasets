@@ -158,15 +158,7 @@ Default address: http://localhost:7860
 5. **Start Processing**: Click the start processing button and monitor progress in real-time
 6. **Download Results**: Download generated datasets after processing completion
 
-### API Service
 
-Start the RESTful API service:
-
-```bash
-python -m app.main
-```
-
-Default address: http://localhost:8000
 
 ### Troubleshooting
 

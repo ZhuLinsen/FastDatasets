@@ -159,16 +159,6 @@ python web_app.py
 5. **开始处理**：点击开始处理按钮，实时监控进度
 6. **下载结果**：处理完成后下载生成的数据集
 
-### API 服务
-
-启动 RESTful API 服务：
-
-```bash
-python -m app.main
-```
-
-默认地址：http://localhost:8000
-
 ### 故障排除
 
 1. **处理速度慢**：增加 MAX_LLM_CONCURRENCY 值，或减少 LLM_MAX_TOKENS
