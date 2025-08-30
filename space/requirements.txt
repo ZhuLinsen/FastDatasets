@@ -1,0 +1,8 @@
+gradio>=4.0
+textract-py3
+rich>=13.0.0
+loguru
+python-dotenv>=1.0.0
+openai>=1.0.0
+git+https://github.com/ZhuLinsen/FastDatasets.git
+

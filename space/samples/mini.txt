@@ -1,0 +1,3 @@
+FastDatasets is a tool that converts documents into high-quality training datasets for LLMs.
+This mini sample keeps the Space demo fast and cost-effective.
+
