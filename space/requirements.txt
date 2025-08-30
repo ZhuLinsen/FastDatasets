@@ -1,8 +1,13 @@
-gradio>=4.0
+gradio==4.44.0
 textract-py3
 rich>=13.0.0
 loguru
 python-dotenv>=1.0.0
 openai>=1.0.0
-git+https://github.com/ZhuLinsen/FastDatasets.git
+tqdm>=4.65.0
+pydantic
+uvicorn
+fastapi
+# Install from specific commit for stability
+git+https://github.com/ZhuLinsen/FastDatasets.git@main
 

@@ -1,8 +1,20 @@
-# FastDatasets
+# FastDatasets 🚀
 
 ![FastDatasets](fastdatasets.png)
 
+[![GitHub Stars](https://img.shields.io/github/stars/ZhuLinsen/FastDatasets?style=social)](https://github.com/ZhuLinsen/FastDatasets/stargazers)
+[![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/mumu157/FastDatasets)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+
 A powerful tool for creating high-quality training datasets for Large Language Models (LLMs) | [切换到中文](README.md)
+
+## 🎯 Try Online
+
+**🚀 Experience FastDatasets instantly, no installation required!**
+
+[![Try on Hugging Face Spaces](https://img.shields.io/badge/🤗%20Try%20Demo-Experience%20Now-orange?style=for-the-badge)](https://huggingface.co/spaces/mumu157/FastDatasets)
+
 
 ## Main Features
 
