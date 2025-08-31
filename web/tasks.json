@@ -1,0 +1,72 @@
+{
+  "task_1754485317919_0aaae003": {
+    "status": "processing",
+    "progress": 90,
+    "current_file": "YOLOv4.pdf",
+    "total_files": 3,
+    "processed_files": 3,
+    "start_time": "2025-08-06T21:01:57.919660",
+    "message": "正在生成数据集..."
+  },
+  "task_1754485431009_b690720c": {
+    "status": "processing",
+    "progress": 0,
+    "current_file": "AttentionIsAllYouNeed.pdf",
+    "total_files": 3,
+    "processed_files": 0,
+    "start_time": "2025-08-06T21:03:51.009996",
+    "message": "正在处理文档..."
+  },
+  "task_1754487348256_83e35771": {
+    "status": "processing",
+    "progress": 60,
+    "current_file": "YOLOv4.pdf",
+    "total_files": 3,
+    "processed_files": 3,
+    "start_time": "2025-08-06T21:35:48.257019",
+    "message": "正在生成问题答案...",
+    "stage": "生成答案",
+    "stage_progress": 0,
+    "total_chunks": 93,
+    "processed_chunks": 0
+  },
+  "task_1754488489247_74113a12": {
+    "status": "processing",
+    "progress": 60,
+    "current_file": "BERTPre-training of Deep Bidirectional Transformers for Language Understanding.pdf",
+    "total_files": 2,
+    "processed_files": 2,
+    "start_time": "2025-08-06T21:54:49.247043",
+    "message": "正在生成问题答案...",
+    "stage": "生成答案",
+    "stage_progress": 0,
+    "total_chunks": 56,
+    "processed_chunks": 0
+  },
+  "task_1754489260461_26b85798": {
+    "status": "processing",
+    "progress": 60,
+    "current_file": "YOLOv4.pdf",
+    "total_files": 3,
+    "processed_files": 3,
+    "start_time": "2025-08-06T22:07:40.461689",
+    "message": "正在生成问题答案...",
+    "stage": "生成答案",
+    "stage_progress": 0,
+    "total_chunks": 93,
+    "processed_chunks": 0
+  },
+  "task_1754490467272_7dafde00": {
+    "status": "processing",
+    "progress": 60,
+    "current_file": "BERTPre-training of Deep Bidirectional Transformers for Language Understanding.pdf",
+    "total_files": 2,
+    "processed_files": 2,
+    "start_time": "2025-08-06T22:27:47.272379",
+    "message": "正在生成问题答案...",
+    "stage": "生成答案",
+    "stage_progress": 0,
+    "total_chunks": 56,
+    "processed_chunks": 0
+  }
+}

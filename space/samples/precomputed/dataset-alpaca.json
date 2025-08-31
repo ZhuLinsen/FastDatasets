@@ -1,0 +1,17 @@
+[
+  {
+    "instruction": "What is FastDatasets?",
+    "input": "",
+    "output": "FastDatasets is a powerful tool designed to convert documents into high-quality training datasets for Large Language Models (LLMs). It automates the process of generating question-answer pairs from various document formats."
+  },
+  {
+    "instruction": "What are the main features of FastDatasets?",
+    "input": "",
+    "output": "The main features include: 1) Intelligent document processing for multiple formats (PDF, Word, Markdown, TXT), 2) Automatic question generation based on document content, 3) High-quality answer generation using LLMs, 4) Asynchronous processing for large-scale documents, 5) Multiple export formats support (Alpaca, ShareGPT), and 6) Direct SFT-ready output for supervised fine-tuning."
+  },
+  {
+    "instruction": "How does FastDatasets help with model training?",
+    "input": "",
+    "output": "FastDatasets streamlines the data preparation process for LLM training by automatically converting raw documents into structured, high-quality question-answer pairs. This eliminates the need for manual annotation, reduces preparation time by 10x, and ensures the generated datasets are immediately compatible with popular fine-tuning frameworks."
+  }
+]

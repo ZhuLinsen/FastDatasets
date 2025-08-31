@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "fastdatasets-llm"
+version = "0.1.3"
+description = "Generate high-quality LLM training datasets from documents with distillation and augmentation."
+readme = "README_PYPI.md"
+requires-python = ">=3.8"
+license = { text = "Apache-2.0" }
+authors = [{ name = "FastDatasets Authors" }]
+keywords = ["llm", "dataset", "alpaca", "sharegpt", "distillation", "sft"]
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+  "pydantic>=2.7.0,<3",
+  "python-dotenv>=1.0.0",
+  "loguru>=0.7.0",
+  "openai>=1.0.0",
+  "rich>=13.0.0",
+  "tqdm>=4.65.0",
+  "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+web = [
+  "fastapi>=0.111",
+  "uvicorn>=0.30",
+  "gradio==4.44.0",
+]
+doc = [
+  "textract-py3>=2.1.1",
+]
+all = [
+  "fastdatasets[web]",
+  "fastdatasets[doc]",
+]
+
+[project.urls]
+Homepage = "https://github.com/ZhuLinsen/FastDatasets"
+Repository = "https://github.com/ZhuLinsen/FastDatasets"
+Issues = "https://github.com/ZhuLinsen/FastDatasets/issues"
+Demo = "https://huggingface.co/spaces/mumu157/FastDatasets"
+
+[project.scripts]
+fastdatasets = "fastdatasets.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude = [
+  "tests*",
+  "space*",
+  "web*",
+  "paper*",
+  "exports*",
+  "output*",
+  "logs*",
+  "data*",
+]
+
+
+
+

@@ -1,0 +1,18 @@
+{
+  "task_1754805192491_e60d7292": {
+    "qa_pairs": 3,
+    "export_files": [
+      "/home/mumu/codes/FastDatasets/output/dataset-alpaca.json",
+      "/home/mumu/codes/FastDatasets/output/dataset-sharegpt.json"
+    ],
+    "raw_file": "/home/mumu/codes/FastDatasets/output/raw_data_20250810_135312.json"
+  },
+  "task_1754806183478_2d8e838f": {
+    "qa_pairs": 3,
+    "export_files": [
+      "/home/mumu/codes/FastDatasets/output/dataset-alpaca.json",
+      "/home/mumu/codes/FastDatasets/output/dataset-sharegpt.json"
+    ],
+    "raw_file": "/home/mumu/codes/FastDatasets/output/raw_data_20250810_140943.json"
+  }
+}

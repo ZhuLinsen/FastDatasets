@@ -2,7 +2,6 @@ import os
 import re
 from pathlib import Path
 from typing import List, Dict, Any
-import textract  # 导入 textract 库
 from app.core.logger import logger
 from app.core.config import config
 
@@ -115,6 +114,13 @@ class DocumentProcessor:
     def _parse_with_textract(self, file_path: Path) -> str:
         """使用 textract 解析文档"""
         try:
+            # 延迟导入，避免在未安装可选依赖时导入失败
+            try:
+                import textract  # type: ignore
+            except Exception:
+                logger.error("未安装可选依赖 textract-py3。请运行: pip install 'fastdatasets[doc]'")
+                return f"无法解析文档 {file_path.name}（缺少 textract），请安装可选依赖: pip install 'fastdatasets[doc]'"
+
             logger.info(f"使用 textract 解析文件: {file_path}")
             text = textract.process(str(file_path)).decode('utf-8')
             return text

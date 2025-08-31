@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/mumu157/FastDatasets)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI - Version](https://img.shields.io/pypi/v/fastdatasets-llm.svg)](https://pypi.org/project/fastdatasets-llm/)
+
 
 A powerful tool for creating high-quality training datasets for Large Language Models (LLMs) | [切换到中文](README.md)
 
@@ -15,6 +17,12 @@ A powerful tool for creating high-quality training datasets for Large Language M
 
 [![Try on Hugging Face Spaces](https://img.shields.io/badge/🤗%20Try%20Demo-Experience%20Now-orange?style=for-the-badge)](https://huggingface.co/spaces/mumu157/FastDatasets)
 
+Upload your documents and generate Alpaca-format training datasets with one click - completely free, no setup needed!
+
+| Usage Mode | Use Case | Features |
+|------------|----------|----------|
+| 🤗 **Spaces Demo** | Quick trial, feature demo | Zero config, instant use, demo only |
+| 💻 **Local Full Version** | Production, real usage | Unlimited, batch processing, complete features |
 
 ## Main Features
 
@@ -180,6 +188,65 @@ Default address: http://localhost:7860
 
 ## License
 [Apache 2.0](LICENSE)
+
+## Install and Use via PyPI
+
+### Install
+
+```bash
+pip install fastdatasets-llm
+# Optional extras:
+# pip install 'fastdatasets-llm[web]'   # Web UI / API
+# pip install 'fastdatasets-llm[doc]'   # Better doc parsing (textract)
+# pip install 'fastdatasets-llm[all]'   # Everything
+```
+
+Or install the latest dev version:
+
+```bash
+pip install git+https://github.com/ZhuLinsen/FastDatasets.git@main
+```
+
+### Configure LLM (environment variables)
+
+```bash
+export LLM_API_KEY="sk-..."
+export LLM_API_BASE="https://api.example.com/v1"
+export LLM_MODEL="your-model"
+```
+
+### Command Line (CLI)
+
+```bash
+# After installing fastdatasets-llm, the CLI name is still `fastdatasets`
+
+# Generate dataset from file/directory
+fastdatasets generate ./data/sample.txt -o ./output
+
+# Multi-format export and JSONL output
+fastdatasets generate ./docs -o ./output -f alpaca,sharegpt --file-format jsonl
+```
+
+### Python API
+
+```python
+# Distribution name is fastdatasets-llm, but the import name remains `fastdatasets`
+from fastdatasets import generate_dataset_to_dir
+
+dataset = generate_dataset_to_dir(
+  inputs=["./data/sample.txt"],
+  output_dir="./output",
+  formats=["alpaca", "sharegpt"],
+  file_format="jsonl",
+  chunk_size=1000,
+  chunk_overlap=200,
+  enable_cot=False,
+  max_llm_concurrency=5,
+  # To override .env, pass directly:
+  # api_key="sk-...", api_base="https://api.example.com/v1", model_name="your-model"
+)
+print(f"Generated items: {len(dataset)}")
+```
 
 ## Star History
 

@@ -6,6 +6,8 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Hugging Face Spaces](https://img.shields.io/badge/🤗%20Hugging%20Face-Spaces-blue)](https://huggingface.co/spaces/mumu157/FastDatasets)
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyPI - Version](https://img.shields.io/pypi/v/fastdatasets-llm.svg)](https://pypi.org/project/fastdatasets-llm/)
+
 
 一个强大的工具，用于为大语言模型（LLM）创建高质量的训练数据集 | [Switch to English](README_en.md)
 
@@ -15,6 +17,12 @@
 
 [![在 Hugging Face Spaces 上试用](https://img.shields.io/badge/🤗%20试用%20Demo-快速体验-orange?style=for-the-badge)](https://huggingface.co/spaces/mumu157/FastDatasets)
 
+上传你的文档，一键生成 Alpaca 格式训练数据集 - 完全免费，无需配置环境！
+
+| 使用方式 | 适用场景 | 特点 |
+|---------|---------|------|
+| 🤗 **Spaces 体验版** | 快速试用、功能演示 | 零配置、即开即用、仅供体验 |
+| 💻 **本地完整版** | 生产环境、实际应用 | 无限制、批量处理、完整功能 |
 
 ## 主要功能
 
@@ -179,6 +187,62 @@ python web_app.py
 
 ## 许可证
 [Apache 2.0](LICENSE)
+
+## 通过 PyPI 安装与使用
+
+### 安装
+
+```bash
+pip install fastdatasets-llm
+# 可选功能：
+# pip install 'fastdatasets-llm[web]'   # Web/UI/API
+# pip install 'fastdatasets-llm[doc]'   # 更佳文档解析（textract）
+# pip install 'fastdatasets-llm[all]'   # 全部可选能力
+```
+
+或安装最新开发版：
+
+```bash
+pip install git+https://github.com/ZhuLinsen/FastDatasets.git@main
+```
+
+### 配置 LLM（环境变量）
+
+```bash
+export LLM_API_KEY="sk-..."
+export LLM_API_BASE="https://api.example.com/v1"
+export LLM_MODEL="your-model"
+```
+
+### 命令行使用（CLI）
+
+```bash
+# 从文件/目录生成数据集（安装 fastdatasets-llm 后，CLI 名称为 fastdatasets）
+fastdatasets generate ./data/sample.txt -o ./output
+
+# 多格式导出与 JSONL 输出
+fastdatasets generate ./docs -o ./output -f alpaca,sharegpt --file-format jsonl
+```
+
+### Python 方式
+
+```python
+# 安装包名为 fastdatasets-llm，但导入名仍为 fastdatasets
+from fastdatasets import generate_dataset_to_dir
+
+dataset = generate_dataset_to_dir(
+  inputs=["./data/sample.txt"],
+  output_dir="./output",
+  formats=["alpaca", "sharegpt"],
+  file_format="jsonl",
+  chunk_size=1000,
+  chunk_overlap=200,
+  enable_cot=False,
+  max_llm_concurrency=5,
+  # 如需覆盖 .env，可直接传：api_key="sk-...", api_base="https://api.example.com/v1", model_name="your-model"
+)
+print(f"Generated items: {len(dataset)}")
+```
 
 ## Star History
 

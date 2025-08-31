@@ -188,3 +188,12 @@ paper/
 exports/
 
 FastDatasets/
+
+docs/
+
+local_data.md
+
+
+.venv*/
+out/
+test_docs/
